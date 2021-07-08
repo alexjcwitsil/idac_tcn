@@ -1,3 +1,4 @@
+from tensorflow.keras.layers import Conv1D, SpatialDropout1D, Activation, add
 
 def residual_block(x, dilation_rate, nb_filters, kernel_size, padding, dropout_rate=0):
     prev_x = x

@@ -1,5 +1,5 @@
 from tensorflow.keras import Input
-from tensorflow.keras.layers import Lambda, add
+from tensorflow.keras.layers import Lambda, add, Dense
 from tensorflow.keras.models import Model
 import idac_tcn as tcn
 

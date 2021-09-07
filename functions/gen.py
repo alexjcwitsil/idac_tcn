@@ -1,6 +1,11 @@
 import numpy as np
 from sklearn.utils import shuffle
 import random
+import numpy as np
+import idac_tcn as tcn
+from sklearn.preprocessing import MinMaxScaler
+from scipy import signal
+from scipy.fft import fft
 
 
 ## GENERATOR FUNCTION
@@ -10,15 +15,60 @@ def gen(X, noise, bs):
     # where m is number of examples and n is the number of samples
     random.seed()
 
-    ## normalize X between 0 and 1
-    x_min = np.repeat(np.min(X, axis=1), repeats=X.shape[1]).reshape(X.shape)
-    x_max = np.repeat(np.max(X, axis=1), repeats=X.shape[1]).reshape(X.shape)
-    X = (X - x_min) / (x_max - x_min)
+    ## filtering
+    sps = 40
+    nyq = 1/2 * sps
+    f_min = 0.02 / nyq
+    f_max = 5.00 / nyq
+    b, a = signal.butter(2, [f_min, f_max], btype='bandpass')
 
-    ## normalize the noise between 0 and 1
-    noise_min = np.repeat(np.min(noise, axis=1), repeats=noise.shape[1]).reshape(noise.shape)
-    noise_max = np.repeat(np.max(noise, axis=1), repeats=noise.shape[1]).reshape(noise.shape)
-    noise = (noise - noise_min) / (noise_max - noise_min)
+    ## write filter wrapper function
+    def wrap_filt(x, b, a):
+        out = signal.filtfilt(b, a, x)
+        return(out)
+    #
+  
+    # apply filter along event and noise array
+    X = np.apply_along_axis(wrap_filt, 1, X, b, a)
+    noise = np.apply_along_axis(wrap_filt, 1, noise, b, a)
+  
+
+
+
+
+
+
+    # ## try the frequency domain
+    # def moving_average(x, w):
+    #     return np.convolve(x, np.ones(w), 'same') / w
+    # def wrap_dmean(x):
+    #     return(x - np.mean(x))
+
+    # X = np.apply_along_axis(wrap_dmean, 1, X)
+    # X = np.abs(fft(X))
+    # noise = np.abs(fft(noise))
+
+    # X = np.apply_along_axis(moving_average, 1, X, 10)
+    # noise = np.apply_along_axis(moving_average, 1, noise, 10)
+
+    # X = X[:,0:X.shape[1]//2]
+    # noise = noise[:,0:noise.shape[1]//2]
+
+
+
+
+
+
+
+
+
+    ## normalize events and noise between 0 and 1
+    X = (MinMaxScaler().fit_transform(X.transpose())).transpose()
+    noise = (MinMaxScaler().fit_transform(noise.transpose())).transpose()
+
+    ## check if there are nan values in the training data
+    X = X[~np.isnan((np.sum(X, axis=1)))]
+    noise = noise[~np.isnan((np.sum(noise, axis=1)))]
 
     while True:
         # Normal distribution with mean bs/2 and sigma bs/20 batch
@@ -43,6 +93,7 @@ def gen(X, noise, bs):
         Xb = np.concatenate((pos_x, neg_x), axis=0)
         
         Xb, Yb = shuffle(Xb, Yb)
-        
+        ##Xb = Xb*np.random.rand(bs,1,1)
+
         yield (Xb, Yb)
 

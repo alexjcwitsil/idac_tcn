@@ -9,6 +9,8 @@ from idac_tcn.functions.rec_fld_len import rec_fld_len
 from idac_tcn.functions.network import network
 from idac_tcn.functions.gen import gen
 from idac_tcn.functions.compile_mseeds import compile_mseeds
+from idac_tcn.functions.DAT_normalize import DAT_normalize
+
 
 
 
